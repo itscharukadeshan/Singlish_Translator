@@ -29,7 +29,7 @@ export default function App() {
           setShowToast(true);
           setTimeout(() => setShowToast(false), 1200);
         })
-        .catch(console.error);
+        .catch("Error copying to clipboard retrying...");
     }
   }, [input, style, autoCopy]);
 
