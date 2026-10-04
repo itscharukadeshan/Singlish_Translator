@@ -5,22 +5,53 @@ This app is a **static Vite build**. `npm run build` outputs `dist/` — host it
 ## Option A — Cloudflare Pages (free, recommended)
 
 1. Push this repo to GitHub.
-2. Cloudflare Dashboard → **Workers & Pages → Create → Pages → Connect to Git**.
-3. Pick repo `Singlish_Translator`.
+2. Cloudflare Dashboard → **Workers & Pages → Create application → select
+   the Pages tab** (the screen defaults to the Worker tab — that path runs
+   `wrangler deploy`, which fails on this repo).
+3. Pick **Import an existing Git repository** → select `Singlish_Translator`.
 4. Build settings:
    - Framework preset: **Vite**
    - Build command: `npm run build`
    - Build output directory: `dist`
-   - Environment variables: none needed (base is `./`, portable).
+   - Root directory: `/` (leave default)
+   - Environment variables: `NODE_VERSION = 20`
+     (`package.json` also pins `engines.node >= 20.19`, which Vite 7 needs)
+   - **Deploy command: leave EMPTY.** Pages uploads `dist/` itself.
+     Anything in this field makes Pages shell out to wrangler.
 5. Deploy. You get `https://<project>.pages.dev`. Add a custom domain free under
    **Custom domains**.
 
-CLI alternative:
+> If you used the **Worker** tab you get
+> `✘ [ERROR] Error parsing file: .../vite.config.js` +
+> `Failed: error occurred while running deploy command`.
+> This repo is static-only on purpose (no `wrangler.toml`, no Workers
+> bindings) so it stays free — wrangler must never run here. Delete that
+> project and redo the steps above on the **Pages** tab.
+
+No-dashboard alternative (same free result, skips the UI entirely):
 
 ```bash
-npm i -g wrangler
 npm run build
-wrangler pages deploy dist --project-name singlish-translator
+npx wrangler pages deploy dist --project-name singlish-translator
+```
+
+This uploads the already-built folder as a Pages deployment — still no
+Worker, still free.
+
+## Troubleshooting
+
+| Symptom | Cause → Fix |
+|---|---|
+| `Error parsing file: .../vite.config.js`, then `Failed: ... running deploy command` | Used the **Worker** tab or set a **Deploy command** → redo on the **Pages** tab (steps above) with Deploy command empty, or use `npx wrangler pages deploy dist` locally |
+| `vite build` fails with syntax/`??`/ESM errors | Build host on old Node → set env `NODE_VERSION = 20` |
+| Deployed site shows 404 on assets / blank page | Absolute `/assets/...` paths → our `vite.config.js` uses portable `base: "./"`; `npm run check-deploy` verifies this |
+| `npm ci` fails: lock file out of sync | Run `npm install` locally, commit the updated `package-lock.json` |
+
+CLI path (also the no-dashboard fallback):
+
+```bash
+npm run build
+npx wrangler pages deploy dist --project-name singlish-translator
 ```
 
 Notes:
